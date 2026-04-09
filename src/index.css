@@ -1,12 +1,14 @@
 :root {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
   font-size: 16px;
   line-height: 1.5;
   font-weight: 400;
   color: #eef4ff;
   background:
-    radial-gradient(circle at top, rgba(81, 128, 219, 0.38), transparent 34%),
-    linear-gradient(180deg, #11192b 0%, #091120 100%);
+    radial-gradient(circle at 15% 20%, rgba(255, 196, 127, 0.18), transparent 24%),
+    radial-gradient(circle at 85% 12%, rgba(110, 188, 255, 0.24), transparent 22%),
+    radial-gradient(circle at 50% 100%, rgba(110, 188, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, #1a2035 0%, #10182b 45%, #091120 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -28,4 +30,8 @@ body,
 body {
   min-width: 320px;
   min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 20% 18%, rgba(255, 196, 127, 0.1), transparent 20%),
+    radial-gradient(circle at 80% 10%, rgba(110, 188, 255, 0.16), transparent 20%),
+    linear-gradient(180deg, #1a2035 0%, #10182b 45%, #091120 100%);
 }

@@ -372,13 +372,23 @@ function App () {
   const hostName = game.host_name || 'Anfitrion'
   const guestName = game.guest_name || 'Invitado'
   const guestSymbol = game.host_symbol === TURNS.X ? TURNS.O : TURNS.X
+  const roleLabel = role === ROLES.HOST ? 'Anfitrion' : role === ROLES.GUEST ? 'Invitado' : 'Espectador'
+  const roomPresenceLabel = occupiedSeats === 2 ? 'Sala completa' : occupiedSeats === 1 ? 'Esperando rival' : 'Sala vacia'
 
   return (
     <main className='board'>
       <header className='room-card'>
-        <p className='eyebrow'>Sala online</p>
-        <h1>Tic Tac Toe</h1>
-        <p className='room-id'>Codigo: {roomId}</p>
+        <div className='hero-head'>
+          <div>
+            <p className='eyebrow'>Sala online</p>
+            <h1>Tic Tac Toe</h1>
+            <p className='room-id'>Codigo: {roomId}</p>
+          </div>
+          <div className='hero-badges'>
+            <span className='badge'>{roomPresenceLabel}</span>
+            <span className='badge badge-soft'>{roleLabel}</span>
+          </div>
+        </div>
         <p className='status'>{status}</p>
 
         <section className='share-card'>
@@ -391,7 +401,7 @@ function App () {
           </div>
           <div className='share-meta'>
             <span>{occupiedSeats}/2 jugadores dentro</span>
-            <span>{role === ROLES.SPECTATOR ? 'Modo espectador' : `Tu rol: ${role}`}</span>
+            <span>{role === ROLES.SPECTATOR ? 'Modo espectador' : `Tu rol: ${roleLabel}`}</span>
           </div>
         </section>
 
@@ -427,11 +437,11 @@ function App () {
         </div>
 
         <section className='players-card'>
-          <div className='player-chip'>
+          <div className='player-chip player-chip-host'>
             <span>{hostName}</span>
             <strong>{game.host_symbol}</strong>
           </div>
-          <div className='player-chip'>
+          <div className='player-chip player-chip-guest'>
             <span>{guestName}</span>
             <strong>{guestSymbol}</strong>
           </div>
