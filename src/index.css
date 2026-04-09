@@ -1,17 +1,17 @@
 :root {
-  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-family: Georgia, 'Times New Roman', serif;
   font-size: 16px;
   line-height: 1.6;
   font-weight: 400;
-  color: #fff7d6;
+  color: #4f2f38;
   background:
-    radial-gradient(circle at 50% 0%, rgba(255, 72, 176, 0.18), transparent 28%),
-    radial-gradient(circle at 0% 100%, rgba(0, 229, 255, 0.16), transparent 24%),
-    linear-gradient(180deg, #170022 0%, #12001b 40%, #090010 100%);
+    radial-gradient(circle at top left, rgba(255, 219, 227, 0.9), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(243, 214, 220, 0.9), transparent 22%),
+    linear-gradient(180deg, #fff8f7 0%, #f9edef 100%);
   font-synthesis: none;
-  text-rendering: geometricPrecision;
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -30,10 +30,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    radial-gradient(circle at 50% 0%, rgba(255, 72, 176, 0.18), transparent 28%),
-    radial-gradient(circle at 0% 100%, rgba(0, 229, 255, 0.16), transparent 24%),
-    linear-gradient(180deg, #170022 0%, #12001b 40%, #090010 100%);
-  background-size: 18px 18px, 18px 18px, auto, auto, auto;
+    radial-gradient(circle at 10% 10%, rgba(255, 228, 233, 0.7), transparent 20%),
+    radial-gradient(circle at 90% 12%, rgba(244, 225, 230, 0.7), transparent 18%),
+    linear-gradient(180deg, #fff8f7 0%, #f9edef 100%);
 }
