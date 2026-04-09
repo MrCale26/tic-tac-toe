@@ -8,14 +8,23 @@ import { hasSupabaseEnv, supabase } from './lib/supabase.js'
 
 const EMPTY_BOARD = Array(9).fill(null)
 const DRAW = 'draw'
+const ROLES = {
+  HOST: 'host',
+  GUEST: 'guest',
+  SPECTATOR: 'spectator'
+}
 
-const createInitialGame = (roomId) => ({
+const createInitialGame = (roomId, playerId) => ({
   id: roomId,
   board: EMPTY_BOARD,
   turn: TURNS.X,
   winner: null,
-  x_player_id: null,
-  o_player_id: null
+  host_player_id: playerId,
+  guest_player_id: null,
+  host_name: '',
+  guest_name: '',
+  host_symbol: TURNS.X,
+  starting_turn: TURNS.X
 })
 
 const createRoomId = () => {
@@ -47,122 +56,143 @@ const getPlayerId = () => {
   return newPlayerId
 }
 
+const getPlayerName = () => window.localStorage.getItem('player-name') ?? ''
+
+const savePlayerName = (name) => {
+  window.localStorage.setItem('player-name', name)
+}
+
 const getWinnerValue = (winner) => {
   if (winner === DRAW) return false
   return winner
 }
 
+const getRoleFromGame = (game, playerId) => {
+  if (game.host_player_id === playerId) return ROLES.HOST
+  if (game.guest_player_id === playerId) return ROLES.GUEST
+  return ROLES.SPECTATOR
+}
+
+const getSymbolForRole = (game, role) => {
+  if (role === ROLES.HOST) return game.host_symbol
+  if (role === ROLES.GUEST) return game.host_symbol === TURNS.X ? TURNS.O : TURNS.X
+  return null
+}
+
+const getStatusMessage = ({ loading, game, role, playerSymbol, isMyTurn }) => {
+  if (loading) return 'Conectando sala...'
+  if (!playerSymbol && role === ROLES.SPECTATOR) return 'La sala ya tiene dos jugadores. Estas viendo como espectador.'
+  if (role === ROLES.HOST && !game.guest_player_id) return 'Esperando a tu pareja para completar la sala.'
+  if (role === ROLES.HOST) return `Eres anfitrion y juegas como ${playerSymbol}.`
+  if (role === ROLES.GUEST) return `Juegas como ${playerSymbol}. ${isMyTurn ? 'Es tu turno.' : 'Espera tu turno.'}`
+  return 'Sala lista.'
+}
+
 function App () {
   const [roomId] = useState(() => getRoomId())
   const [playerId] = useState(() => getPlayerId())
-  const [game, setGame] = useState(() => createInitialGame(roomId))
-  const [playerSymbol, setPlayerSymbol] = useState(null)
-  const [status, setStatus] = useState('Conectando sala...')
+  const [game, setGame] = useState(() => createInitialGame(roomId, playerId))
+  const [role, setRole] = useState(ROLES.HOST)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [draftName, setDraftName] = useState(() => getPlayerName())
 
   const board = game.board ?? EMPTY_BOARD
   const turn = game.turn ?? TURNS.X
   const winner = getWinnerValue(game.winner)
   const shareUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`
-
+  const playerSymbol = getSymbolForRole(game, role)
   const isBoardFull = useMemo(
     () => board.every((square) => square !== null),
     [board]
   )
-
   const isMyTurn = playerSymbol === turn
-  const canPlay = Boolean(playerSymbol) && !game.winner && isMyTurn
+  const isRoomReady = Boolean(game.host_player_id && game.guest_player_id)
+  const canPlay = Boolean(playerSymbol) && !game.winner && isMyTurn && isRoomReady
+  const status = getStatusMessage({ loading, game, role, playerSymbol, isMyTurn })
 
   useEffect(() => {
     if (!hasSupabaseEnv) {
       setLoading(false)
       setError('Faltan las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.')
-      setStatus('Configura Supabase para habilitar el modo online.')
       return
     }
 
     let active = true
 
     const fetchGame = async () => {
-      const { data: currentGame, error: selectError } = await supabase
+      const { data, error: selectError } = await supabase
         .from('games')
         .select('*')
         .eq('id', roomId)
         .maybeSingle()
 
       if (selectError) throw selectError
-      return currentGame
+      return data
     }
 
     const ensureGameExists = async () => {
       const existingGame = await fetchGame()
       if (existingGame) return existingGame
 
-      const { data: insertedGame, error: insertError } = await supabase
+      const { data, error: insertError } = await supabase
         .from('games')
-        .insert(createInitialGame(roomId))
+        .insert(createInitialGame(roomId, playerId))
         .select()
         .single()
 
       if (insertError) throw insertError
-      return insertedGame
+      return data
     }
 
-    const claimSeat = async (currentGame) => {
-      if (currentGame.x_player_id === playerId) return { game: currentGame, symbol: TURNS.X }
-      if (currentGame.o_player_id === playerId) return { game: currentGame, symbol: TURNS.O }
+    const claimRole = async (currentGame) => {
+      if (currentGame.host_player_id === playerId) return { game: currentGame, nextRole: ROLES.HOST }
+      if (currentGame.guest_player_id === playerId) return { game: currentGame, nextRole: ROLES.GUEST }
 
-      if (!currentGame.x_player_id) {
-        const { data, error: updateError } = await supabase
+      if (!currentGame.host_player_id) {
+        const { data, error: hostError } = await supabase
           .from('games')
-          .update({ x_player_id: playerId })
+          .update({ host_player_id: playerId })
           .eq('id', roomId)
-          .is('x_player_id', null)
+          .is('host_player_id', null)
           .select()
           .maybeSingle()
 
-        if (updateError) throw updateError
-        if (data) return { game: data, symbol: TURNS.X }
-        return claimSeat(await fetchGame())
+        if (hostError) throw hostError
+        if (data) return { game: data, nextRole: ROLES.HOST }
+        return claimRole(await fetchGame())
       }
 
-      if (!currentGame.o_player_id) {
-        const { data, error: updateError } = await supabase
+      if (!currentGame.guest_player_id) {
+        const { data, error: guestError } = await supabase
           .from('games')
-          .update({ o_player_id: playerId })
+          .update({ guest_player_id: playerId })
           .eq('id', roomId)
-          .is('o_player_id', null)
+          .is('guest_player_id', null)
           .select()
           .maybeSingle()
 
-        if (updateError) throw updateError
-        if (data) return { game: data, symbol: TURNS.O }
-        return claimSeat(await fetchGame())
+        if (guestError) throw guestError
+        if (data) return { game: data, nextRole: ROLES.GUEST }
+        return claimRole(await fetchGame())
       }
 
-      return { game: currentGame, symbol: null }
+      return { game: currentGame, nextRole: ROLES.SPECTATOR }
     }
 
     const setupRoom = async () => {
       try {
         const currentGame = await ensureGameExists()
-        const seatResult = await claimSeat(currentGame)
+        const claimResult = await claimRole(currentGame)
 
         if (!active) return
 
-        setGame(seatResult.game)
-        setPlayerSymbol(seatResult.symbol)
-        setStatus(
-          seatResult.symbol
-            ? `Juegas como ${seatResult.symbol}.`
-            : 'La sala ya tiene dos jugadores. Estás viendo como espectador.'
-        )
+        setGame(claimResult.game)
+        setRole(claimResult.nextRole)
       } catch (setupError) {
         if (!active) return
         setError(setupError.message)
-        setStatus('No se pudo conectar la sala.')
       } finally {
         if (active) setLoading(false)
       }
@@ -181,9 +211,9 @@ function App () {
           filter: `id=eq.${roomId}`
         },
         (payload) => {
-          const nextGame = payload.new
-          if (!nextGame || !active) return
-          setGame(nextGame)
+          if (!payload.new || !active) return
+          setGame(payload.new)
+          setRole(getRoleFromGame(payload.new, playerId))
         }
       )
       .subscribe()
@@ -204,15 +234,6 @@ function App () {
     return () => window.clearTimeout(timeoutId)
   }, [copied])
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl)
-      setCopied(true)
-    } catch {
-      setError('No pude copiar el enlace. Copialo manualmente desde la barra del navegador.')
-    }
-  }
-
   const updateGame = async (nextValues) => {
     const { data, error: updateError } = await supabase
       .from('games')
@@ -223,6 +244,53 @@ function App () {
 
     if (updateError) throw updateError
     setGame(data)
+    setRole(getRoleFromGame(data, playerId))
+  }
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+    } catch {
+      setError('No pude copiar el enlace. Copialo manualmente desde la barra del navegador.')
+    }
+  }
+
+  const saveNameToRoom = async () => {
+    if (!draftName.trim() || role === ROLES.SPECTATOR) return
+
+    const trimmedName = draftName.trim().slice(0, 24)
+    const columnName = role === ROLES.HOST ? 'host_name' : 'guest_name'
+
+    try {
+      await updateGame({ [columnName]: trimmedName })
+      savePlayerName(trimmedName)
+      setDraftName(trimmedName)
+      setError('')
+    } catch (saveError) {
+      setError(saveError.message)
+    }
+  }
+
+  const updateHostSettings = async (nextSettings) => {
+    if (role !== ROLES.HOST) return
+
+    try {
+      const mergedSettings = {
+        host_symbol: nextSettings.host_symbol ?? game.host_symbol,
+        starting_turn: nextSettings.starting_turn ?? game.starting_turn
+      }
+
+      await updateGame({
+        ...mergedSettings,
+        board: EMPTY_BOARD,
+        turn: mergedSettings.starting_turn,
+        winner: null
+      })
+      setError('')
+    } catch (settingsError) {
+      setError(settingsError.message)
+    }
   }
 
   const resetGame = async () => {
@@ -231,7 +299,7 @@ function App () {
     try {
       await updateGame({
         board: EMPTY_BOARD,
-        turn: TURNS.X,
+        turn: game.starting_turn ?? TURNS.X,
         winner: null
       })
       setError('')
@@ -262,6 +330,10 @@ function App () {
     }
   }
 
+  const hostName = game.host_name || 'Anfitrion'
+  const guestName = game.guest_name || 'Invitado'
+  const guestSymbol = game.host_symbol === TURNS.X ? TURNS.O : TURNS.X
+
   return (
     <main className='board'>
       <header className='room-card'>
@@ -269,6 +341,7 @@ function App () {
         <h1>Tic Tac Toe</h1>
         <p className='room-id'>Codigo: {roomId}</p>
         <p className='status'>{status}</p>
+
         <div className='actions'>
           <button onClick={handleCopyLink} type='button'>
             {copied ? 'Link copiado' : 'Copiar link'}
@@ -277,34 +350,105 @@ function App () {
             Reiniciar
           </button>
         </div>
+
+        <div className='name-form'>
+          <input
+            type='text'
+            value={draftName}
+            maxLength={24}
+            placeholder='Pon tu nombre'
+            onChange={(event) => setDraftName(event.target.value)}
+          />
+          <button onClick={saveNameToRoom} type='button' disabled={!draftName.trim() || role === ROLES.SPECTATOR}>
+            Guardar nombre
+          </button>
+        </div>
+
         <p className='hint'>
           Comparte este enlace con tu pareja: <a href={shareUrl}>{shareUrl}</a>
         </p>
+
+        <section className='players-card'>
+          <div className='player-chip'>
+            <span>{hostName}</span>
+            <strong>{game.host_symbol}</strong>
+          </div>
+          <div className='player-chip'>
+            <span>{guestName}</span>
+            <strong>{guestSymbol}</strong>
+          </div>
+        </section>
+
+        {role === ROLES.HOST && (
+          <section className='setup-card'>
+            <p className='setup-title'>Configura la partida</p>
+            <div className='setup-grid'>
+              <div>
+                <p className='setup-label'>Tu ficha</p>
+                <div className='inline-actions'>
+                  <button
+                    className={game.host_symbol === TURNS.X ? 'is-active' : ''}
+                    onClick={() => updateHostSettings({ host_symbol: TURNS.X })}
+                    type='button'
+                  >
+                    Quiero ser X
+                  </button>
+                  <button
+                    className={game.host_symbol === TURNS.O ? 'is-active' : ''}
+                    onClick={() => updateHostSettings({ host_symbol: TURNS.O })}
+                    type='button'
+                  >
+                    Quiero ser O
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <p className='setup-label'>Empieza</p>
+                <div className='inline-actions'>
+                  <button
+                    className={game.starting_turn === TURNS.X ? 'is-active' : ''}
+                    onClick={() => updateHostSettings({ starting_turn: TURNS.X })}
+                    type='button'
+                  >
+                    Empieza X
+                  </button>
+                  <button
+                    className={game.starting_turn === TURNS.O ? 'is-active' : ''}
+                    onClick={() => updateHostSettings({ starting_turn: TURNS.O })}
+                    type='button'
+                  >
+                    Empieza O
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {!loading && playerSymbol && (
           <p className='hint'>
-            Tu ficha es <strong>{playerSymbol}</strong>. {isMyTurn ? 'Es tu turno.' : 'Espera el turno rival.'}
+            Tu ficha es <strong>{playerSymbol}</strong>. {isRoomReady ? (isMyTurn ? 'Es tu turno.' : 'Espera el turno rival.') : 'Esperando al segundo jugador.'}
           </p>
         )}
+
         {!loading && !playerSymbol && (
           <p className='hint'>La sala admite dos jugadores. Si quieres jugar, crea una sala nueva.</p>
         )}
+
         {error && <p className='error'>{error}</p>}
       </header>
 
       <section className='game'>
-        {
-          board.map((square, index) => {
-            return (
-              <Square
-                key={index}
-                index={index}
-                updateBoard={updateBoard}
-              >
-                {square}
-              </Square>
-            )
-          })
-        }
+        {board.map((square, index) => (
+          <Square
+            key={index}
+            index={index}
+            updateBoard={updateBoard}
+          >
+            {square}
+          </Square>
+        ))}
       </section>
 
       <section className='turn'>
@@ -316,7 +460,13 @@ function App () {
         </Square>
       </section>
 
-      <p className='hint'>{isBoardFull && !game.winner ? 'Tablero lleno.' : 'La partida se sincroniza en tiempo real.'}</p>
+      <p className='hint'>
+        {!isRoomReady
+          ? 'La partida se activa cuando entren dos jugadores.'
+          : isBoardFull && !game.winner
+              ? 'Tablero lleno.'
+              : 'La partida se sincroniza en tiempo real.'}
+      </p>
 
       <WinnerModal resetGame={resetGame} winner={winner} />
     </main>

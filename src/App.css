@@ -1,5 +1,5 @@
 .board {
-  width: min(100%, 560px);
+  width: min(100%, 640px);
   margin: 0 auto;
   padding: 32px 20px 48px;
   display: flex;
@@ -8,8 +8,13 @@
   gap: 24px;
 }
 
-.room-card {
+.room-card,
+.players-card,
+.setup-card {
   width: 100%;
+}
+
+.room-card {
   padding: 24px;
   border: 1px solid #2f384b;
   border-radius: 24px;
@@ -61,11 +66,30 @@
   color: #ff9f9f;
 }
 
-.actions {
+.actions,
+.inline-actions,
+.name-form {
   display: flex;
   gap: 12px;
-  margin-top: 18px;
   flex-wrap: wrap;
+}
+
+.actions {
+  margin-top: 18px;
+}
+
+.name-form {
+  margin-top: 18px;
+}
+
+.name-form input {
+  flex: 1 1 220px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid #44506a;
+  background: rgba(255, 255, 255, 0.05);
+  color: #eef4ff;
 }
 
 .board button {
@@ -88,6 +112,55 @@
 .board button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.board button.is-active {
+  background: #8cb4ff;
+  color: #091120;
+}
+
+.players-card,
+.setup-card {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #2f384b;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.players-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.player-chip {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(140, 180, 255, 0.09);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-chip strong {
+  font-size: 1.4rem;
+}
+
+.setup-title,
+.setup-label {
+  font-weight: 700;
+}
+
+.setup-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.setup-label {
+  margin-bottom: 10px;
 }
 
 .game {
@@ -173,11 +246,18 @@
     padding: 20px;
   }
 
-  .actions {
+  .actions,
+  .name-form,
+  .inline-actions {
     flex-direction: column;
   }
 
-  .board button {
+  .board button,
+  .name-form input {
     width: 100%;
+  }
+
+  .players-card {
+    grid-template-columns: 1fr;
   }
 }
