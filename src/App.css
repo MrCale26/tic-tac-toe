@@ -10,7 +10,8 @@
 
 .room-card,
 .players-card,
-.setup-card {
+.setup-card,
+.share-card {
   width: 100%;
 }
 
@@ -78,6 +79,37 @@
   margin-top: 18px;
 }
 
+.share-card {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #2f384b;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  gap: 14px;
+}
+
+.share-link-box {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px dashed #51617f;
+  background: rgba(140, 180, 255, 0.08);
+}
+
+.share-link-box span {
+  display: block;
+  word-break: break-all;
+  color: #eef4ff;
+}
+
+.share-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #9fb3d1;
+  font-size: 0.92rem;
+}
+
 .name-form {
   margin-top: 18px;
 }
@@ -101,6 +133,22 @@
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.action-link {
+  padding: 10px 16px;
+  border: 1px solid #8cb4ff;
+  border-radius: 999px;
+  color: #eef4ff;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.action-link:hover {
+  background: #8cb4ff;
+  color: #091120;
+  transform: translateY(-1px);
 }
 
 .board button:hover:not(:disabled) {
@@ -253,7 +301,8 @@
   }
 
   .board button,
-  .name-form input {
+  .name-form input,
+  .action-link {
     width: 100%;
   }
 

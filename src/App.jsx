@@ -96,6 +96,7 @@ function App () {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [shared, setShared] = useState(false)
   const [draftName, setDraftName] = useState(() => getPlayerName())
 
   const board = game.board ?? EMPTY_BOARD
@@ -103,6 +104,7 @@ function App () {
   const winner = getWinnerValue(game.winner)
   const shareUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`
   const playerSymbol = getSymbolForRole(game, role)
+  const occupiedSeats = [game.host_player_id, game.guest_player_id].filter(Boolean).length
   const isBoardFull = useMemo(
     () => board.every((square) => square !== null),
     [board]
@@ -111,6 +113,8 @@ function App () {
   const isRoomReady = Boolean(game.host_player_id && game.guest_player_id)
   const canPlay = Boolean(playerSymbol) && !game.winner && isMyTurn && isRoomReady
   const status = getStatusMessage({ loading, game, role, playerSymbol, isMyTurn })
+  const inviteMessage = `Juega conmigo Tic Tac Toe: ${shareUrl}`
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(inviteMessage)}`
 
   useEffect(() => {
     if (!hasSupabaseEnv) {
@@ -234,6 +238,16 @@ function App () {
     return () => window.clearTimeout(timeoutId)
   }, [copied])
 
+  useEffect(() => {
+    if (!shared) return
+
+    const timeoutId = window.setTimeout(() => {
+      setShared(false)
+    }, 2000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [shared])
+
   const updateGame = async (nextValues) => {
     const { data, error: updateError } = await supabase
       .from('games')
@@ -254,6 +268,31 @@ function App () {
     } catch {
       setError('No pude copiar el enlace. Copialo manualmente desde la barra del navegador.')
     }
+  }
+
+  const handleShareRoom = async () => {
+    if (!navigator.share) {
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    try {
+      await navigator.share({
+        title: 'Tic Tac Toe Online',
+        text: 'Entra a mi sala y juguemos.',
+        url: shareUrl
+      })
+      setShared(true)
+    } catch (shareError) {
+      if (shareError?.name !== 'AbortError') {
+        setError('No pude abrir el menu de compartir.')
+      }
+    }
+  }
+
+  const handleCreateNewRoom = () => {
+    const newRoomId = createRoomId()
+    window.location.assign(`${window.location.origin}${window.location.pathname}?room=${newRoomId}`)
   }
 
   const saveNameToRoom = async () => {
@@ -342,9 +381,32 @@ function App () {
         <p className='room-id'>Codigo: {roomId}</p>
         <p className='status'>{status}</p>
 
+        <section className='share-card'>
+          <div>
+            <p className='setup-title'>Invita a alguien</p>
+            <p className='hint'>Comparte esta sala mientras sigues jugando. Ambos deben abrir exactamente el mismo link.</p>
+          </div>
+          <div className='share-link-box'>
+            <span>{shareUrl}</span>
+          </div>
+          <div className='share-meta'>
+            <span>{occupiedSeats}/2 jugadores dentro</span>
+            <span>{role === ROLES.SPECTATOR ? 'Modo espectador' : `Tu rol: ${role}`}</span>
+          </div>
+        </section>
+
         <div className='actions'>
           <button onClick={handleCopyLink} type='button'>
             {copied ? 'Link copiado' : 'Copiar link'}
+          </button>
+          <button onClick={handleShareRoom} type='button'>
+            {shared ? 'Invitacion enviada' : 'Compartir sala'}
+          </button>
+          <a className='action-link' href={whatsappUrl} target='_blank' rel='noreferrer'>
+            Enviar por WhatsApp
+          </a>
+          <button onClick={handleCreateNewRoom} type='button'>
+            Crear nueva sala
           </button>
           <button onClick={resetGame} type='button' disabled={!playerSymbol}>
             Reiniciar
@@ -363,10 +425,6 @@ function App () {
             Guardar nombre
           </button>
         </div>
-
-        <p className='hint'>
-          Comparte este enlace con tu pareja: <a href={shareUrl}>{shareUrl}</a>
-        </p>
 
         <section className='players-card'>
           <div className='player-chip'>
