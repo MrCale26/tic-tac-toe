@@ -3,11 +3,11 @@
   font-size: 16px;
   line-height: 1.6;
   font-weight: 400;
-  color: #4f2f38;
+  color: #f5e8e6;
   background:
-    radial-gradient(circle at top left, rgba(255, 219, 227, 0.9), transparent 26%),
-    radial-gradient(circle at bottom right, rgba(243, 214, 220, 0.9), transparent 22%),
-    linear-gradient(180deg, #fff8f7 0%, #f9edef 100%);
+    radial-gradient(circle at top left, rgba(130, 59, 87, 0.34), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(191, 145, 106, 0.2), transparent 20%),
+    linear-gradient(180deg, #20131a 0%, #161017 48%, #0e0a0f 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -30,7 +30,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-image:
-    radial-gradient(circle at 10% 10%, rgba(255, 228, 233, 0.7), transparent 20%),
-    radial-gradient(circle at 90% 12%, rgba(244, 225, 230, 0.7), transparent 18%),
-    linear-gradient(180deg, #fff8f7 0%, #f9edef 100%);
+    radial-gradient(circle at 14% 12%, rgba(130, 59, 87, 0.24), transparent 18%),
+    radial-gradient(circle at 86% 10%, rgba(191, 145, 106, 0.14), transparent 16%),
+    linear-gradient(180deg, #20131a 0%, #161017 48%, #0e0a0f 100%);
 }
