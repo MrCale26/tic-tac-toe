@@ -2,12 +2,12 @@ export const Square = ({ children, isSelected, updateBoard, index }) => {
   const className = `square ${isSelected ? 'is-selected' : ''}`
 
   const handleClick = () => {
-    updateBoard(index)
+    if (updateBoard) updateBoard(index)
   }
 
   return (
-    <div className={className} onClick={handleClick}>
+    <button className={className} onClick={handleClick} type='button'>
       {children}
-    </div>
+    </button>
   )
 }

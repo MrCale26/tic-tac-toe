@@ -1,16 +1,47 @@
-# React + Vite
+# Tic Tac Toe Online
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tic Tac Toe en React + Vite con salas compartidas en tiempo real usando Supabase.
 
-Currently, two official plugins are available:
+## Desarrollo local
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Copia `.env.example` a `.env`.
+2. Coloca tus credenciales:
 
-## React Compiler
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+3. Instala dependencias y levanta la app:
 
-## Expanding the ESLint configuration
+```bash
+npm install
+npm start
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Configuracion de Supabase
+
+1. Crea un proyecto en Supabase.
+2. Ve a `SQL Editor`.
+3. Ejecuta el contenido de [supabase/schema.sql](/D:/Practicas%20Personales/React/projects/02-tic-tac-toe/supabase/schema.sql).
+4. Ve a `Project Settings > API` y copia:
+   - `Project URL`
+   - `anon public key`
+5. Pega esos valores en `.env` y tambien en las variables de entorno de Vercel.
+
+## Despliegue en Vercel
+
+1. Abre tu proyecto en Vercel.
+2. Ve a `Settings > Environment Variables`.
+3. Agrega `VITE_SUPABASE_URL`.
+4. Agrega `VITE_SUPABASE_ANON_KEY`.
+5. Redeploy.
+
+## Como jugar
+
+1. Abre la app.
+2. Copia el enlace de la sala.
+3. Enviaselo a tu pareja.
+4. El primer navegador toma `X` y el segundo toma `O`.
+
+Si entra una tercera persona, queda como espectador.
