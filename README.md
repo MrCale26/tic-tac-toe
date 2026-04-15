@@ -1,4 +1,6 @@
 # Tic Tac Toe Online
+Link para jugar : 
+https://tic-tac-toe-kappa-seven-35.vercel.app/?room=
 
 Tic Tac Toe en React + Vite con salas compartidas en tiempo real usando Supabase.
 
